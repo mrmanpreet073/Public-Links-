@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>User Info</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background: #0f172a;
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+
+            width: 500px;
+
+            background: #1e293b;
+
+            padding: 30px;
+
+            border-radius: 12px;
+
+            box-shadow:
+                0 0 20px rgba(0, 0, 0, 0.4);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        button {
+
+            width: 100%;
+
+            padding: 12px;
+
+            border: none;
+
+            border-radius: 8px;
+
+            background: #2563eb;
+
+            color: white;
+
+            font-size: 16px;
+
+            cursor: pointer;
+
+            margin-bottom: 20px;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        pre {
+
+            background: #0f172a;
+
+            padding: 15px;
+
+            border-radius: 8px;
+
+            overflow: auto;
+
+            white-space: pre-wrap;
+
+            word-break: break-word;
+        }
+
+        .error {
+            color: #ef4444;
+            text-align: center;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+
+        <h1>User Info</h1>
+
+        <button id="userinfoBtn">
+
+            Get User Info
+
+        </button>
+
+        <pre id="result">
+No Data
+    </pre>
+
+        <p id="error" class="error"></p>
+
+    </div>
+
+    <script>
+
+        const button =
+            document.getElementById(
+                "userinfoBtn"
+            );
+
+        button.addEventListener(
+            "click",
+            getUserInfo
+        );
+
+        async function getUserInfo() {
+
+            try {
+
+                // ============================
+                // Get Access Token
+                // ============================
+
+                let accessToken =
+                    localStorage.getItem(
+                        "access_token"
+                    );
+
+                if (!accessToken) {
+
+                    document.getElementById(
+                        "error"
+                    ).innerText =
+                        "No access token found";
+
+                    return;
+                }
+
+                // ============================
+                // Call Protected API
+                // ============================
+
+                let response = await fetch("http://localhost:5000/o/userinfo",
+                        {
+
+                            method: "GET",
+                            headers: {
+                                Authorization: `Bearer ${accessToken}`
+                            }
+                        }
+                    );
+
+                // ============================
+                // Access Token Expired
+                // ============================
+
+                if (response.status === 401) {
+
+                    console.log(
+                        "Access token expired Login again to refresh token"
+                    );
+
+                    // ============================
+                    // Call Refresh Endpoint
+                    // ============================
+
+                    const refreshResponse = await fetch("http://localhost:5000/o/refresh",
+                        {
+
+                            method: "POST",
+                            credentials:
+                                "include"
+                        }
+                    );
+
+                    // ============================
+                    // Refresh Failed
+                    // ============================
+
+                    if (!refreshResponse.ok) {
+
+                        localStorage.removeItem(
+                            "access_token"
+                        );
+
+                        window.location.href =
+                            "/login.html";
+
+                        return;
+                    }
+
+                    // ============================
+                    // Get New Access Token
+                    // ============================
+
+                    const refreshData = await refreshResponse.json();
+
+                    // Save New Access Token
+
+                    localStorage.setItem(
+                        "access_token",
+                        refreshData.access_token
+                    );
+
+                    accessToken = refreshData.access_token;
+
+                    // ============================
+                    // Retry Original Request
+                    // ============================
+
+                    response = await fetch("http://localhost:5000/o/userinfo", {
+                        method: "GET",
+                        headers: {
+                            Authorization: `Bearer ${accessToken}`
+                        }
+                    }
+                    );
+                }
+
+                // ============================
+                // Parse User Data
+                // ============================
+
+                const data = await response.json();
+
+                document.getElementById("result").innerText = JSON.stringify(data, null, 2);
+
+            } catch (error) {
+
+                console.error(error);
+
+                document.getElementById(
+                    "error"
+                ).innerText =
+                    "Something went wrong";
+            }
+        }
+    </script>
+
+</body>
+
+</html>

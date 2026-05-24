@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Register OAuth Client</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #0f172a;
+            padding: 20px;
+            color: white;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            background: #111827;
+            padding: 40px;
+            border-radius: 16px;
+            border: 1px solid #1f2937;
+            box-shadow:
+                0 10px 25px rgba(0, 0, 0, 0.4);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #f9fafb;
+            font-size: 28px;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #cbd5e1;
+            font-size: 14px;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px;
+            border-radius: 10px;
+            border: 1px solid #374151;
+            background: #1f2937;
+            color: white;
+            font-size: 15px;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        input:focus {
+            border-color: #2563eb;
+            box-shadow:
+                0 0 0 3px rgba(37, 99, 235, 0.3);
+        }
+
+        input::placeholder {
+            color: #94a3b8;
+        }
+
+        button {
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            background: #2563eb;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            transition: 0.3s;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        .result {
+            margin-top: 30px;
+            background: #020617;
+            border: 1px solid #1e293b;
+            padding: 20px;
+            border-radius: 12px;
+            display: none;
+        }
+
+        .success {
+            color: #22c55e;
+            margin-bottom: 15px;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        pre {
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            color: #e2e8f0;
+            line-height: 1.6;
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+
+        <h1>Register OAuth Client</h1>
+
+        <form id="registerForm" action="/o/register-client" method="POST">
+
+            <!-- App Name -->
+
+            <div>
+
+                <label>
+                    Application Name
+                </label>
+
+                <input type="text" id="appName" placeholder="My Frontend App" required />
+
+            </div>
+
+            <!-- Redirect URI -->
+
+            <div>
+
+                <label>
+                    Redirect URI
+                </label>
+
+                <input type="text" id="redirectUri" placeholder="http://localhost:3000/callback.html" required />
+
+            </div>
+
+            <!-- Scope -->
+
+            <div>
+
+                <label>
+                    Scope
+                </label>
+
+                <input type="text" id="scope" value="openid profile email" />
+
+            </div>
+
+            <!-- Response Type -->
+
+            <div>
+
+                <label>
+                    Response Type
+                </label>
+
+                <input type="text" id="responseType" value="code" />
+
+            </div>
+
+            <button type="submit">
+                Register Client
+            </button>
+
+        </form>
+
+        <!-- Result -->
+
+        <div class="result" id="result">
+
+            <div class="success">
+                OAuth Client Registered Successfully
+            </div>
+
+            <pre id="output"></pre>
+
+        </div>
+
+    </div>
+
+    <script>
+
+        const form =
+            document.getElementById("registerForm");
+
+        const resultBox =
+            document.getElementById("result");
+
+        const output =
+            document.getElementById("output");
+
+        // ======================================
+        // Register OAuth Client
+        // ======================================
+
+        form.addEventListener(
+            "submit",
+            async (e) => {
+
+                e.preventDefault();
+
+                const appName = document.getElementById("appName").value;
+
+                const redirectUri = document.getElementById("redirectUri").value;
+
+                const scope = document.getElementById("scope").value;
+
+                const responseType = document.getElementById("responseType").value;
+
+                try {
+
+                    const response = await fetch("/o/register-client",
+                        {
+                            method: "POST",
+
+                            headers: { "Content-Type": "application/json" },
+
+                            body: JSON.stringify({
+
+                                appName,
+                                redirectUri,
+                                scope,
+                                responseType
+
+                            })
+                        }
+                    );
+
+                    const data = await response.json();
+
+                    resultBox.style.display = "block";
+
+                    output.textContent = JSON.stringify(data, null, 2);
+
+                } catch (error) {
+
+                    alert("Something went wrong");
+                }
+            }
+        );
+
+    </script>
+
+</body>
+
+</html>

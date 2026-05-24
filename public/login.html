@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Login</title>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    body {
+
+      height: 100vh;
+
+      display: flex;
+      justify-content: center;
+      align-items: center;
+
+      background: #0f172a;
+    }
+
+    .login-box {
+
+      width: 380px;
+
+      background: #1e293b;
+
+      padding: 35px;
+
+      border-radius: 16px;
+
+      box-shadow:
+        0 0 20px rgba(0, 0, 0, 0.5);
+    }
+
+    h1 {
+
+      color: white;
+
+      text-align: center;
+
+      margin-bottom: 30px;
+    }
+
+    .input-group {
+
+      margin-bottom: 20px;
+    }
+
+    label {
+
+      display: block;
+
+      color: #cbd5e1;
+
+      margin-bottom: 8px;
+    }
+
+    input {
+
+      width: 100%;
+
+      padding: 12px;
+
+      border: none;
+
+      border-radius: 10px;
+
+      background: #334155;
+
+      color: white;
+
+      outline: none;
+    }
+
+    input::placeholder {
+      color: #94a3b8;
+    }
+
+    button {
+
+      width: 100%;
+
+      padding: 12px;
+
+      border: none;
+
+      border-radius: 10px;
+
+      background: #2563eb;
+
+      color: white;
+
+      font-size: 16px;
+
+      font-weight: bold;
+
+      cursor: pointer;
+
+      transition: 0.3s;
+    }
+
+    button:hover {
+      background: #1d4ed8;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="login-box">
+
+    <h1>Login</h1>
+
+    <form action="/o/authorize" method="POST">
+
+      <div class="input-group">
+
+        <label>Email</label>
+
+        <input type="email" name="email" placeholder="Enter your email" required>
+
+      </div>
+
+      <div class="input-group">
+
+        <label>Password</label>
+
+        <input type="password" name="password" placeholder="Enter your password" required>
+
+
+      </div>
+      <input type="hidden" name="client_id" id="client_id" />
+
+      <input type="hidden" name="redirect_uri" id="redirect_uri" />
+
+      <input type="hidden" name="state" id="state" />
+
+      <button type="submit">
+        Login
+      </button>
+
+    </form>
+
+  </div>
+  <script>
+
+    const params = new URLSearchParams(window.location.search);
+
+    document.getElementById("client_id").value = params.get("client_id");
+
+    document.getElementById("redirect_uri").value = params.get("redirect_uri");
+
+    document.getElementById("state").value = params.get("state");
+
+  </script>
+</body>
+
+</html>

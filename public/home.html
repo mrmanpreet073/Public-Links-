@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+
+  <title>OIDC Identity Provider</title>
+
+  <style>
+
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
+      font-family:Arial,Helvetica,sans-serif;
+    }
+
+    body{
+      background:#0f172a;
+      color:white;
+      overflow-x:hidden;
+    }
+
+    /* =========================
+       NAVBAR
+    ========================== */
+
+    nav{
+
+      width:100%;
+
+      padding:20px 80px;
+
+      display:flex;
+
+      justify-content:space-between;
+
+      align-items:center;
+
+      background:#111827;
+
+      border-bottom:
+        1px solid #1e293b;
+
+      position:sticky;
+
+      top:0;
+
+      z-index:100;
+    }
+
+    .logo{
+
+      font-size:28px;
+
+      font-weight:bold;
+
+      color:#3b82f6;
+    }
+
+    .nav-links{
+
+      display:flex;
+
+      gap:25px;
+    }
+
+    .nav-links a{
+
+      text-decoration:none;
+
+      color:#cbd5e1;
+
+      transition:0.3s;
+    }
+
+    .nav-links a:hover{
+      color:white;
+    }
+
+    .buttons{
+
+      display:flex;
+
+      align-items:center;
+
+      gap:15px;
+    }
+
+    .btn{
+
+      padding:12px 22px;
+
+      border:none;
+
+      border-radius:12px;
+
+      cursor:pointer;
+
+      font-size:15px;
+
+      font-weight:600;
+
+      transition:0.3s;
+
+      text-decoration:none;
+    }
+
+    /* =========================
+       LOGIN BUTTON
+    ========================== */
+
+    .login-btn{
+
+      background:
+        linear-gradient(
+          135deg,
+          #2563eb,
+          #3b82f6
+        );
+
+      color:white;
+
+      box-shadow:
+        0 0 20px
+        rgba(37,99,235,0.35);
+
+      position:relative;
+
+      overflow:hidden;
+    }
+
+    .login-btn:hover{
+
+      transform:
+        translateY(-2px);
+
+      box-shadow:
+        0 0 30px
+        rgba(59,130,246,0.5);
+    }
+
+    .login-btn::before{
+
+      content:"";
+
+      position:absolute;
+
+      top:0;
+
+      left:-100%;
+
+      width:100%;
+
+      height:100%;
+
+      background:
+        rgba(255,255,255,0.15);
+
+      transition:0.5s;
+    }
+
+    .login-btn:hover::before{
+      left:100%;
+    }
+
+    .signup-btn{
+
+      background:#1e293b;
+
+      color:white;
+    }
+
+    .signup-btn:hover{
+      background:#334155;
+    }
+
+    /* =========================
+       HERO SECTION
+    ========================== */
+
+    .hero{
+
+      min-height:92vh;
+
+      display:flex;
+
+      justify-content:center;
+
+      align-items:center;
+
+      padding:80px;
+    }
+
+    .hero-content{
+
+      max-width:900px;
+
+      text-align:center;
+    }
+
+    .hero-content h1{
+
+      font-size:64px;
+
+      line-height:1.2;
+
+      margin-bottom:25px;
+    }
+
+    .hero-content h1 span{
+
+      color:#3b82f6;
+    }
+
+    .hero-content p{
+
+      font-size:20px;
+
+      color:#94a3b8;
+
+      line-height:1.8;
+
+      margin-bottom:40px;
+    }
+
+    .hero-buttons{
+
+      display:flex;
+
+      justify-content:center;
+
+      gap:20px;
+
+      flex-wrap:wrap;
+    }
+
+    .hero-btn{
+
+      padding:15px 30px;
+
+      border-radius:14px;
+
+      text-decoration:none;
+
+      font-weight:bold;
+
+      transition:0.3s;
+    }
+
+    .primary-btn{
+
+      background:#2563eb;
+
+      color:white;
+    }
+
+    .primary-btn:hover{
+
+      background:#1d4ed8;
+
+      transform:translateY(-2px);
+    }
+
+    .secondary-btn{
+
+      background:#1e293b;
+
+      color:white;
+    }
+
+    .secondary-btn:hover{
+
+      background:#334155;
+
+      transform:translateY(-2px);
+    }
+
+    /* =========================
+       FEATURES
+    ========================== */
+
+    .features{
+
+      padding:80px;
+
+      display:grid;
+
+      grid-template-columns:
+        repeat(
+          auto-fit,
+          minmax(280px,1fr)
+        );
+
+      gap:25px;
+    }
+
+    .card{
+
+      background:#1e293b;
+
+      padding:35px;
+
+      border-radius:18px;
+
+      border:
+        1px solid #334155;
+
+      transition:0.3s;
+    }
+
+    .card:hover{
+
+      transform:
+        translateY(-6px);
+
+      border-color:#3b82f6;
+    }
+
+    .card h3{
+
+      margin-bottom:18px;
+
+      color:#3b82f6;
+
+      font-size:22px;
+    }
+
+    .card p{
+
+      color:#94a3b8;
+
+      line-height:1.8;
+    }
+
+    code{
+
+      background:#0f172a;
+
+      padding:3px 6px;
+
+      border-radius:6px;
+
+      color:#60a5fa;
+    }
+
+    /* =========================
+       FLOW SECTION
+    ========================== */
+
+    .flow{
+
+      padding:80px;
+
+      text-align:center;
+    }
+
+    .flow h2{
+
+      font-size:42px;
+
+      margin-bottom:50px;
+    }
+
+    .flow-box{
+
+      display:flex;
+
+      justify-content:center;
+
+      flex-wrap:wrap;
+
+      gap:20px;
+    }
+
+    .step{
+
+      background:#1e293b;
+
+      padding:25px;
+
+      border-radius:16px;
+
+      min-width:200px;
+
+      border:
+        1px solid #334155;
+    }
+
+    .step span{
+
+      display:block;
+
+      font-size:14px;
+
+      color:#94a3b8;
+
+      margin-bottom:10px;
+    }
+
+    .step h3{
+
+      color:#3b82f6;
+    }
+
+    /* =========================
+       FOOTER
+    ========================== */
+
+    footer{
+
+      padding:30px;
+
+      text-align:center;
+
+      border-top:
+        1px solid #1e293b;
+
+      color:#94a3b8;
+    }
+
+    /* =========================
+       RESPONSIVE
+    ========================== */
+
+    @media(max-width:900px){
+
+      nav{
+
+        padding:20px;
+
+        flex-direction:column;
+
+        gap:20px;
+      }
+
+      .hero{
+        padding:40px 20px;
+      }
+
+      .hero-content h1{
+        font-size:42px;
+      }
+
+      .hero-content p{
+        font-size:17px;
+      }
+
+      .features,
+      .flow{
+        padding:40px 20px;
+      }
+    }
+
+  </style>
+</head>
+
+<body>
+
+  <!-- =========================
+       NAVBAR
+  ========================== -->
+
+  <nav>
+
+    <div class="logo">
+      OIDC Provider
+    </div>
+
+    <div class="nav-links">
+
+      <a href="/.well-known/openid-configuration">
+        Discovery
+      </a>
+
+      <a href="/.well-known/jwks.json">
+        JWKS
+      </a>
+
+      <a href="/userInfo.html">
+        UserInfo
+      </a>
+
+      <a
+        style="color:#3b82f6;"
+        href="/o/register-client"
+      >
+        Register Client
+      </a>
+
+    </div>
+
+    <div class="buttons">
+
+      <button
+        id="loginBtn"
+        class="btn login-btn"
+      >
+        Login With OIDC
+      </button>
+
+      <a
+        href="/signup.html"
+        class="btn signup-btn"
+      >
+        Create Account
+      </a>
+
+    </div>
+
+  </nav>
+
+  <!-- =========================
+       HERO
+  ========================== -->
+
+  <section class="hero">
+
+    <div class="hero-content">
+
+      <h1>
+
+        Build Your Own
+
+        <span>
+          OpenID Connect
+        </span>
+
+        Identity Provider
+
+      </h1>
+
+      <p>
+
+        A complete OAuth 2.0 and OpenID Connect
+        authentication server built with
+        TypeScript, Express, PostgreSQL,
+        Drizzle ORM, JWT, RS256 cryptography,
+        refresh tokens, JWKS discovery,
+        and secure authorization code flow.
+
+      </p>
+
+      <div class="hero-buttons">
+
+        <a
+          href="/signup.html"
+          class="hero-btn primary-btn"
+        >
+          Create User Account
+        </a>
+
+        <a
+          href="/.well-known/openid-configuration"
+          class="hero-btn secondary-btn"
+        >
+          Explore OIDC Discovery
+        </a>
+
+      </div>
+
+    </div>
+
+  </section>
+
+  <!-- =========================
+       FEATURES
+  ========================== -->
+
+  <section class="features">
+
+    <div class="card">
+
+      <h3>
+        OAuth 2.0 Authorization Code Flow
+      </h3>
+
+      <p>
+
+        Implements secure OAuth login flow
+        using authorization codes,
+        redirect URIs, client validation,
+        and token exchange endpoints.
+
+      </p>
+
+    </div>
+
+    <div class="card">
+
+      <h3>
+        OpenID Connect Support
+      </h3>
+
+      <p>
+
+        Supports OIDC discovery,
+        identity claims,
+        ID tokens,
+        and UserInfo endpoint
+        for authentication and user identity.
+
+      </p>
+
+    </div>
+
+    <div class="card">
+
+      <h3>
+        RS256 JWT Authentication
+      </h3>
+
+      <p>
+
+        Tokens are cryptographically signed
+        using RSA private/public key pairs
+        and verified through
+        <code>/.well-known/jwks.json</code>.
+
+      </p>
+
+    </div>
+
+    <div class="card">
+
+      <h3>
+        Secure Refresh Token Flow
+      </h3>
+
+      <p>
+
+        Long-lived refresh tokens are stored
+        inside secure HttpOnly cookies,
+        while short-lived access tokens
+        protect APIs.
+
+      </p>
+
+    </div>
+
+  </section>
+
+  <!-- =========================
+       FLOW SECTION
+  ========================== -->
+
+  <section class="flow">
+
+    <h2>
+      Authentication Flow
+    </h2>
+
+    <div class="flow-box">
+
+      <div class="step">
+        <span>STEP 1</span>
+        <h3>
+          Client Login
+        </h3>
+      </div>
+
+      <div class="step">
+        <span>STEP 2</span>
+        <h3>
+          Authorization Code
+        </h3>
+      </div>
+
+      <div class="step">
+        <span>STEP 3</span>
+        <h3>
+          Token Exchange
+        </h3>
+      </div>
+
+      <div class="step">
+        <span>STEP 4</span>
+        <h3>
+          JWT Access Token
+        </h3>
+      </div>
+
+      <div class="step">
+        <span>STEP 5</span>
+        <h3>
+          Protected APIs
+        </h3>
+      </div>
+
+    </div>
+
+  </section>
+
+  <!-- =========================
+       FOOTER
+  ========================== -->
+
+  <footer>
+
+    © 2026 OpenID Connect Identity Provider
+
+  </footer>
+
+  <script>
+
+    const loginBtn =
+      document.getElementById(
+        "loginBtn"
+      );
+
+    loginBtn.addEventListener(
+      "click",
+      () => {
+
+        const params =
+          new URLSearchParams({
+
+            client_id:
+              "774068bf10b8b92f2a4d7c299bcf3d99",
+
+            redirect_uri:
+              "http://localhost:5000/callback.html",
+
+            response_type:
+              "code",
+
+            scope:
+              "openid profile email",
+
+            state:
+              crypto.randomUUID()
+          });
+
+        window.location.href =
+          `http://localhost:5000/o/authorize?${params}`;
+      }
+    );
+
+  </script>
+
+</body>
+</html>

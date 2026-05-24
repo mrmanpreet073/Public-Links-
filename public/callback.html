@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>OAuth Callback</title>
+
+  <style>
+    body {
+      background: #0f172a;
+      color: white;
+      font-family: Arial;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .box {
+      background: #1e293b;
+      padding: 30px;
+      border-radius: 10px;
+      width: 400px;
+      text-align: center;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="box">
+
+    <h2>Logging you in...</h2>
+
+    <p id="message">
+      Please wait...
+    </p>
+
+  </div>
+
+  <script>
+
+    async function exchangeCode() {
+
+      // ============================
+      // Read Query Params
+      // ============================
+
+      const params =
+        new URLSearchParams(
+          window.location.search
+        );
+
+      const code =
+        params.get("code");
+
+      const state =
+        params.get("state");
+
+      if (!code) {
+
+        document.getElementById(
+          "message"
+        ).innerText =
+          "Authorization code missing";
+
+        return;
+      }
+
+      try {
+
+        // ============================
+        // Exchange Code For Tokens
+        // ============================
+
+        const response = await fetch("http://localhost:5000/o/token", {
+
+          method: "POST",
+
+          headers: { "Content-Type": "application/json" },
+
+          body: JSON.stringify({
+
+            code,
+            client_id: "774068bf10b8b92f2a4d7c299bcf3d99",
+            client_secret: "YOUR_CLIENT_SECRET",
+            redirect_uri: "http://localhost:5000/callback.html",
+            grant_type:"authorization_code"
+          })
+        }
+        );
+
+        const data = await response.json();
+
+        console.log(response);
+        console.log(data);
+
+        localStorage.setItem(
+          "access_token",
+          data.access_token
+        );
+
+        localStorage.setItem(
+          "id_token",
+          data.id_token
+        );
+
+        document.getElementById(
+          "message"
+        ).innerText =
+          "Login Successful";
+
+        // ============================
+        // Redirect User
+        // ============================
+
+        setTimeout(() => {
+
+          window.location.href =
+            "/home";
+
+        }, 18000);
+      } catch (error) {
+
+        console.error(error);
+
+        document.getElementById("message").innerText = "Login failed";
+      }
+    }
+
+    exchangeCode();
+
+  </script>
+
+</body>
+
+</html>
