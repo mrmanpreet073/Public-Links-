@@ -617,10 +617,78 @@
       transform: none !important;
     }
   }
+
+   .sticker {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 9999;
+    background: #afeeff;
+    /* border: 1.5px solid #e2e8f0; */
+    border-radius: 12px;
+    padding: 14px 18px;
+    min-width: 220px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.10);
+    font-family: sans-serif;
+  }
+  .sticker-badge {
+    
+    background: #ffed2a;
+    color: #854d0e;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 99px;
+    margin-bottom: 10px;
+    display: inline-block;
+  }
+  .sticker-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 0;
+    border-bottom: 1px solid #007ffe;
+    gap: 16px;
+  }
+  .sticker-row:last-child { border-bottom: none; }
+  .sticker-label { font-size: 13.5px; color: #4f5c6d; font-weight: 700; font-family: monospace; }
+  .sticker-value {
+    font-size: 12px;
+    font-weight: 600;
+    font-family: monospace;
+    background: #3098ff;
+    border-radius: 6px;
+    padding: 2px 8px;
+  }
+  .sticker-close {
+    float: right;
+    cursor: pointer;
+    background: none;
+    border: none;
+    font-size: 16px;
+    color: #006aff;
+    margin-top: -4px;
+  }
 </style>
 </head>
 <body>
 
+<div class="sticker" id="devSticker">
+  <button class="sticker-close" onclick="document.getElementById('devSticker').style.display='none'">✕</button>
+  <div class="sticker-badge">Testing only</div>
+  <div class="sticker-row">
+    <span class="sticker-label">🔑 Access token</span>
+    <span class="sticker-value">2 min</span>
+  </div>
+  <div class="sticker-row">
+    <span class="sticker-label">🔄 Refresh token</span>
+    <span class="sticker-value">7 min</span>
+  </div>
+  <div class="sticker-row">
+    <span class="sticker-label">⏱ Session</span>
+    <span class="sticker-value">5 min</span>
+  </div>
+</div>
 <!-- Nav -->
 <nav>
   <a class="nav-brand" href="#">
