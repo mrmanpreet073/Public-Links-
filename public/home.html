@@ -569,10 +569,11 @@
       <li><a href="/o/register-client" class="accent reg">Register Client</a></li>
     </ul>
 
-    <!-- <div class="nav-btns">
+    <div class="nav-btns">
       <button id="loginBtn" class="btn btn-primary">Login</button>
       <a id="signupBtn" class="btn btn-ghost">Signup</a>
-    </div> -->
+    </div>
+
   </nav>
 
   <!-- Hero -->
@@ -727,26 +728,30 @@
     // ── Login / Signup buttons — original functionality untouched ──
     const loginBtn = document.getElementById("loginBtn");
     loginBtn.addEventListener("click", () => {
-      const params = new URLSearchParams({
-        client_id: "8a0aed734e698a9f2e82ecce3940952b",
-        redirect_uri: "https://msa-auth.onrender.com/callback.html",
-        response_type: "code",
-        scope: "openid profile email",
-        state: crypto.randomUUID()
-      });
-      window.location.href = `https://msa-auth.onrender.com/o/authorize?${params}`;
+
+      alert("Try Login Through Client ! direct Login not allowed ")
+      // const params = new URLSearchParams({
+      //   client_id: "8a0aed734e698a9f2e82ecce3940952b",
+      //   redirect_uri: "https://msa-auth.onrender.com/callback.html",
+      //   response_type: "code",
+      //   scope: "openid profile email",
+      //   state: crypto.randomUUID()
+      // });
+      // window.location.href = `https://msa-auth.onrender.com/o/authorize?${params}`;
     });
 
     const signupBtn = document.getElementById("signupBtn");
     signupBtn.addEventListener("click", () => {
-      const params = new URLSearchParams({
-        client_id: "8a0aed734e698a9f2e82ecce3940952b",
-        redirect_uri: "https://msa-auth.onrender.com/callback.html",
-        response_type: "code",
-        scope: "openid profile email",
-        state: crypto.randomUUID()
-      });
-      window.location.href = `https://msa-auth.onrender.com/signup?${params}`;
+            alert("Try SignUp Through Client ! direct SignUp not allowed ")
+
+      // const params = new URLSearchParams({
+      //   client_id: "8a0aed734e698a9f2e82ecce3940952b",
+      //   redirect_uri: "https://msa-auth.onrender.com/callback.html",
+      //   response_type: "code",
+      //   scope: "openid profile email",
+      //   state: crypto.randomUUID()
+      // });
+      // window.location.href = `https://msa-auth.onrender.com/signup?${params}`;
     });
 
     // ── Scroll reveal ──
