@@ -12,7 +12,7 @@
 
 export interface JWTClaims {
 
-  iss: string;  // Issuer
+  iss: string |undefined;  // Issuer
   sub: string;  // Subject (user id)
   aud: string;  // Audience (client id)
   email: string;  // User Email

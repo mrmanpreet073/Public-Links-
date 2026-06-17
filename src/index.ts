@@ -15,15 +15,17 @@ import { log } from "console";
 import { refreshTokensTable } from "./db/RefTokenTable.js";
 import { sessionsTable } from "./db/SessionTable.js";
 import cors from "cors";
+import dotenv from "dotenv"
 
 
+dotenv.config();
 
 const app = express();
 
-
+app.set("trust proxy", 1);
 // 2. Enable CORS for your frontend origin
 app.use(cors({
-  origin: 'http://localhost:3000',
+  origin: true,       // allow any origin
   credentials: true
 }));
 
@@ -32,10 +34,10 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static("public"));
-
 const PORT = process.env.PORT ?? 5000;
 
-const ISSUER = `http://localhost:${PORT}`;
+// const ISSUER = `http://localhost:${PORT}`;
+const ISSUER = process.env.ISSUER;
 
 // ======================================================
 // Types
@@ -53,6 +55,8 @@ type PendingAuthorization = {
   clientId: string;
   redirectUri: string;
   state?: string;
+  expiresAt: number;
+
 };
 
 const pendingAuthorizations = new Map<string, PendingAuthorization>();
@@ -81,19 +85,7 @@ app.get("/.well-known/openid-configuration", (_: Request, res: Response) => {
     root: "./public"
   });
 
-  // return res.json({
-  //   issuer: ISSUER,
-  //   authorization_endpoint: `${ISSUER}/o/authorize`,
-  //   token_endpoint: `${ISSUER}/o/token`,
-  //   userinfo_endpoint: `${ISSUER}/o/userinfo`,
-  //   // refresh_token_endpoint: `${ISSUER}/o/refresh`,
-  //   jwks_uri: `${ISSUER}/.well-known/jwks.json`,
-  //   response_types_supported: ["code"],
-  //   subject_types_supported: ["public"],
-  //   id_token_signing_alg_values_supported: ["RS256"],
-  //   scopes_supported: ["openid", "profile", "email"],
-  //   token_endpoint_auth_methods_supported: ["client_secret_post"]
-  // });
+
 }
 );
 
@@ -135,70 +127,72 @@ app.post("/signup", async (req: Request, res: Response) => {
     state
   } = req.body;
 
-    if (
-      !firstName ||
-      !lastName ||
-      !email ||
-      !password
-    ) {
-      return res.status(400).json({
-        message: "All fields are required"
-      });
-    }
+  if (
+    !firstName ||
+    !lastName ||
+    !email ||
+    !password
+  ) {
+    return res.status(400).json({
+      message: "All fields are required"
+    });
+  }
 
-    const [existingUser] = await db
-      .select()
-      .from(usersTable)
-      .where(eq(usersTable.email, email))
-      .limit(1);
+  const [existingUser] = await db
+    .select()
+    .from(usersTable)
+    .where(eq(usersTable.email, email))
+    .limit(1);
 
-    if (existingUser) {
-      return res.status(400).send(
-        "User already exists"
-      );
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const [user] = await db.insert(usersTable).values({
-      firstName,
-      lastName,
-      email,
-      password: hashedPassword
-    }).returning();
-
-    const newSessionId = crypto.randomBytes(32).toString("hex");
-
-    await db
-      .insert(sessionsTable)
-      .values({
-        sessionId: newSessionId,
-        userId: user!.id,
-        expiresAt: new Date(Date.now() + 1000 * 60 * 5) // Session valid for 5 minutes
-      });
-
-    res.cookie("session", newSessionId,
-      {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 1000 * 60 * 2 // 2 minutes
-      }
+  if (existingUser) {
+    return res.status(400).send(
+      "User already exists"
     );
+  }
 
+  const hashedPassword = await bcrypt.hash(password, 10);
 
-    const consentId = crypto.randomBytes(32).toString("hex");
+  const [user] = await db.insert(usersTable).values({
+    firstName,
+    lastName,
+    email,
+    password: hashedPassword
+  }).returning();
 
-    pendingAuthorizations.set(consentId, {
-      userId: user?.id as string,
-      clientId: client_id,
-      redirectUri: redirect_uri,
-      state
+  const newSessionId = crypto.randomBytes(32).toString("hex");
+
+  await db
+    .insert(sessionsTable)
+    .values({
+      sessionId: newSessionId,
+      userId: user!.id,
+      expiresAt: new Date(Date.now() + Number(process.env.SESSION_TTL) * 1000)
     });
 
-    return res.redirect(`/o/consent?consent_id=${consentId}`);
+  res.cookie("session", newSessionId,
+    {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: Number(process.env.SESSION_TTL) * 1000 //1day     // 2 minutes
+    }
+  );
 
-  }
+
+  const consentId = crypto.randomBytes(32).toString("hex");
+
+  pendingAuthorizations.set(consentId, {
+    userId: user?.id as string,
+    clientId: client_id,
+    redirectUri: redirect_uri,
+    state,
+    expiresAt: Date.now() + 1000 * 60 * 5 // Code valid for 5 minutes
+
+  });
+
+  return res.redirect(`/o/consent?consent_id=${consentId}`);
+
+}
 
 
 );
@@ -274,6 +268,7 @@ app.get("/o/authorize", async (req: Request, res: Response) => {
         userId: session.userId,
         clientId: String(client_id),
         redirectUri: String(redirect_uri),
+        expiresAt: Date.now() + 1000 * 60 * 5 // Code valid for 5 minutes
 
       });
       return res.redirect(`/o/consent?consent_id=${consentId}`);
@@ -309,7 +304,6 @@ app.post("/o/authorize", async (req: Request, res: Response) => {
   // ============================
   // Existing Session
   // ============================
-
   if (sessionId) {
 
     const [session] = await db
@@ -400,7 +394,7 @@ app.post("/o/authorize", async (req: Request, res: Response) => {
       .values({
         sessionId: newSessionId,
         userId: user.id,
-        expiresAt: new Date(Date.now() + 1000 * 60 * 5) // Session valid for 5 minutes
+        expiresAt: new Date(Date.now() + Number(process.env.SESSION_TTL) * 1000) // Session valid for 5 minutes
       });
 
     res.cookie("session", newSessionId,
@@ -408,7 +402,7 @@ app.post("/o/authorize", async (req: Request, res: Response) => {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "lax",
-        maxAge: 1000 * 60 * 2 // 2 minutes
+        maxAge: Number(process.env.SESSION_TTL) * 1000//----------------------
       }
     );
   }
@@ -437,38 +431,17 @@ app.post("/o/authorize", async (req: Request, res: Response) => {
       userId: user.id,
       clientId: client_id,
       redirectUri: redirect_uri,
-      state
+      state,
+      expiresAt: Date.now() + 1000 * 60 * 5 // Code valid for 5 minutes
+
     }
   );
 
   return res.redirect(`/o/consent?consent_id=${consentId}`
   );
 });
-app.post("/logout", async (req, res) => {
 
-  const sessionId =
-    req.cookies.session;
 
-  if (sessionId) {
-
-    await db
-      .delete(sessionsTable)
-      .where(
-        eq(
-          sessionsTable.sessionId,
-          sessionId
-        )
-      );
-  }
-
-  res.clearCookie("session");
-
-  return res.json({
-    message:
-      "Logged out successfully"
-  });
-
-});
 
 app.get("/o/consent", async (req, res) => {
 
@@ -744,6 +717,14 @@ app.post("/o/consent", async (req, res) => {
       "Invalid consent"
     );
   }
+  if (pending.expiresAt < Date.now()) { // Prevents someone from using an old code hours later.
+
+    pendingAuthorizations.delete(consent_id);
+
+    return res.status(400).json({
+      error: "authorization_request_expired"
+    });
+  }
 
   pendingAuthorizations.delete(consent_id);
 
@@ -889,7 +870,7 @@ app.post("/o/token", async (req: Request, res: Response) => {
       email: user.email,
       email_verified: user.emailVerified,
       iat: now,
-      exp: now + 120, // 2 minutes
+      exp: now + Number(process.env.ACCESS_TOKEN_TTL), //---------------
       given_name: user.firstName ?? "",
       family_name: user.lastName ?? undefined,
       name: [user.firstName, user.lastName]
@@ -904,14 +885,14 @@ app.post("/o/token", async (req: Request, res: Response) => {
 
     const refreshToken = crypto.randomBytes(64).toString("hex");
 
-    console.log("Generated Refresh Token:", refreshToken);
+    // console.log("Generated Refresh Token:", refreshToken);
 
     const tokenHash = crypto
       .createHash("sha256")
       .update(refreshToken)
       .digest("hex");
 
-    console.log("Hashed Refresh Token:", tokenHash);
+    // console.log("Hashed Refresh Token:", tokenHash);
 
     //////////////////////////////////////////////////////////////////////////////////////////////
     await db
@@ -920,12 +901,12 @@ app.post("/o/token", async (req: Request, res: Response) => {
         userId: user.id,
         clientId: client_id,
         tokenHash,
-        expiresAt: new Date(Date.now() + 1000 * 60 * 10) // 10 mins 
+        expiresAt: new Date(Date.now() + Number(process.env.REFRESH_TOKEN_TTL) * 1000) // 10 mins 
       });
-    console.log(
-      "Stored refresh token in database with hash:",
-      tokenHash
-    );
+    // console.log(
+    //   "Stored refresh token in database with hash:",
+    //   tokenHash
+    // );
     /////////////////////////////////////////////////////////////////////////////////////////////////
     // REFRESH TOKEN 
     res.clearCookie("refresh_token", {
@@ -935,25 +916,25 @@ app.post("/o/token", async (req: Request, res: Response) => {
     res.cookie("refresh_token", refreshToken,
       {
         httpOnly: true,
-        secure: false,
+        secure: process.env.NODE_ENV === "production",
         sameSite: "lax",
         path: "/",
-        maxAge: 1000 * 60 * 10 //
+        maxAge: Number(process.env.REFRESH_TOKEN_TTL) * 1000 //
       }
     );
     /////////////////////////////////////////////////////////////////////////////////////
 
-    console.log(
-      "REFRESH TOKEN  cookie in authorization :",
-      req.cookies.refresh_token
-    );
+    // console.log(
+    //   "REFRESH TOKEN  cookie in authorization :",
+    //   req.cookies.refresh_token
+    // );
 
     return res.json({
       access_token: accessToken,
       token_type: "Bearer",
       id_token: idToken,
       refresh_token: refreshToken,
-      expires_in: 120 // 2 minutes
+      expires_in: Number(process.env.ACCESS_TOKEN_TTL) 
     });
   }
 
@@ -966,7 +947,7 @@ app.post("/o/token", async (req: Request, res: Response) => {
 
     const refresh_token = req.cookies.refresh_token;
 
-    console.log("Cookie Token:", refresh_token);
+    // console.log("Cookie Token:", refresh_token);
 
     if (!refresh_token) {
       return res.status(400).json({
@@ -1015,7 +996,7 @@ app.post("/o/token", async (req: Request, res: Response) => {
       .update(refresh_token)
       .digest("hex");
 
-    console.log("Token Hash:", tokenHash);
+    // console.log("Token Hash:", tokenHash);
 
     const [storedToken] = await db // 
       .select()
@@ -1028,7 +1009,7 @@ app.post("/o/token", async (req: Request, res: Response) => {
       )
       .limit(1);
 
-    console.log("Stored Token:", storedToken);
+    // console.log("Stored Token:", storedToken);
 
     if (!storedToken) {
       return res.status(401).json({
@@ -1036,9 +1017,7 @@ app.post("/o/token", async (req: Request, res: Response) => {
       });
     }
 
-    if (storedToken.expiresAt &&
-      storedToken.expiresAt < new Date()
-    ) {
+    if (storedToken.expiresAt && storedToken.expiresAt < new Date()) {
 
       await db
         .delete(refreshTokensTable)
@@ -1077,7 +1056,7 @@ app.post("/o/token", async (req: Request, res: Response) => {
       email: user.email,
       email_verified: user.emailVerified,
       iat: now,
-      exp: now + 120, //
+      exp: now + Number(process.env.ACCESS_TOKEN_TTL), //
       given_name: user.firstName ?? "",
       family_name: user.lastName ?? undefined,
       name: [user.firstName, user.lastName].filter(Boolean).join(" "),
@@ -1091,7 +1070,7 @@ app.post("/o/token", async (req: Request, res: Response) => {
       access_token: accessToken,
       // refresh_token: newRefreshToken,
       token_type: "Bearer",
-      expires_in: 300 // 5 minutes
+      expires_in: Number(process.env.ACCESS_TOKEN_TTL)
     });
   }
 
@@ -1276,6 +1255,44 @@ app.post("/o/register-client", async (req: Request, res: Response) => {
 }
 );
 
+
+app.post("/logout", async (req, res) => {
+
+  const refreshToken =
+    req.cookies.refresh_token;
+
+  if (refreshToken) {
+
+    const tokenHash = crypto
+      .createHash("sha256")
+      .update(refreshToken)
+      .digest("hex");
+
+    await db
+      .delete(refreshTokensTable)
+      .where(
+        eq(
+          refreshTokensTable.tokenHash,
+          tokenHash
+        )
+      );
+  }
+
+  res.clearCookie(
+    "refresh_token",
+    {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production", // true in production
+      sameSite: "lax"
+    }
+  );
+
+  return res.json({
+    message:
+      "Logged out successfully"
+  });
+
+});
 
 // ======================================================
 // Start Server

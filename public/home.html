@@ -716,7 +716,7 @@ height: 40px;
   <!-- Footer -->
   <footer>
     <p>© 2026 <span>OpenID Connect</span> Identity Provider · RS256 · OAuth 2.0 · Session SSO</p>
-    <p style="margin-top:8px;font-size:11px;color:#374151">issuer: http://localhost:5000 · jwks: /.well-known/jwks.json
+    <p style="margin-top:8px;font-size:11px;color:#374151">issuer: https://msa-auth.onrender.com · jwks: /.well-known/jwks.json
       · discovery: /.well-known/openid-configuration</p>
   </footer>
 
@@ -726,24 +726,24 @@ height: 40px;
     loginBtn.addEventListener("click", () => {
       const params = new URLSearchParams({
         client_id: "8a0aed734e698a9f2e82ecce3940952b",
-        redirect_uri: "http://localhost:5000/callback.html",
+        redirect_uri: "https://msa-auth.onrender.com/callback.html",
         response_type: "code",
         scope: "openid profile email",
         state: crypto.randomUUID()
       });
-      window.location.href = `http://localhost:5000/o/authorize?${params}`;
+      window.location.href = `https://msa-auth.onrender.com/o/authorize?${params}`;
     });
 
     const signupBtn = document.getElementById("signupBtn");
     signupBtn.addEventListener("click", () => {
       const params = new URLSearchParams({
         client_id: "8a0aed734e698a9f2e82ecce3940952b",
-        redirect_uri: "http://localhost:5000/callback.html",
+        redirect_uri: "https://msa-auth.onrender.com/callback.html",
         response_type: "code",
         scope: "openid profile email",
         state: crypto.randomUUID()
       });
-      window.location.href = `http://localhost:5000/signup?${params}`;
+      window.location.href = `https://msa-auth.onrender.com/signup?${params}`;
     });
 
     // ── Scroll reveal ──

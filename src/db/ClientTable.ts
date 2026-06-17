@@ -14,7 +14,7 @@ export const oauthClientsTable = pgTable(
 
     clientId: varchar("client_id", {
       length: 255
-    }).notNull(),
+    }).notNull().unique(),
 
 
     clientSecret: varchar("client_secret", {
